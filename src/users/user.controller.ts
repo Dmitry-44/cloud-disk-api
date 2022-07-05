@@ -11,5 +11,11 @@ export class UserController {
 	CreateUser(@Body() dto: CreateUserDto) {
 		return this.userService.createUser(dto)
 	}
+
+	@Post('/login')
+	@HttpCode(200)
+	Login(@Body() dto: CreateUserDto) {
+		return this.userService.login(dto)
+	}
   
 }

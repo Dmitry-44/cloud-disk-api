@@ -8,10 +8,10 @@ export type UserDocument = User & Document;
 @Schema()
 export class User {
   @Prop({ required: true, unique: true })
-  email: String;
+  email: string;
 
   @Prop({required: true})
-  password: String;
+  password: string;
 
   @Prop({default: 1024**3*10})
   diskSpace: Number;
@@ -20,7 +20,7 @@ export class User {
   usedSpace: Number;
 
   @Prop()
-  avatar: String
+  avatar: string
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }] })
   files: File[]
