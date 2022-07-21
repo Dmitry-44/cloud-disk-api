@@ -5,11 +5,15 @@ import { UserService } from './user.service';
 import { User, UserSchema } from './schemas/user.schema';
 import { UserController } from './user.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { FileModule } from 'src/files/file.module';
+import { File, FileSchema } from 'src/files/schemas/file.schema';
 
 @Module({
 	imports: [
 		ConfigModule, 
+		FileModule,
 		MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+		MongooseModule.forFeature([{ name: File.name, schema: FileSchema }]),
 		JwtModule.registerAsync({
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
@@ -19,7 +23,10 @@ import { JwtModule } from '@nestjs/jwt';
 		}),
 	],
 	controllers: [UserController],
-	providers: [UserService],
+	providers: [
+		UserService,
+	],
+	exports: [UserService]
 })
 export class UserModule {
 	constructor(private configService: ConfigService) {}

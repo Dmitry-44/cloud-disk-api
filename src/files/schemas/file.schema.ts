@@ -8,19 +8,19 @@ export type FileDocument = File & Document;
 @Schema()
 export class File {
 	@Prop({ required: true })
-	name: String;
+	name: string;
 
 	@Prop({required: true})
-	type: String;
+	type: string;
 
-	@Prop({required: true})
-	accsessLink: String
+	@Prop({default: ''})
+	accsessLink: string
 
 	@Prop({default: 0})
 	size: Number
 
 	@Prop({default: ''})
-	path: String
+	path: string
 
 	@Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
 	user: User
@@ -29,7 +29,7 @@ export class File {
 	parent: File
 
 	@Prop({type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }]})
-	childs: File
+	childs: File[]
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);
