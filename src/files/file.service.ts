@@ -1,3 +1,4 @@
+import { Next, UploadedFile } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Injectable, Inject, Req, Res } from '@nestjs/common';
 import { File, FileDocument } from './schemas/file.schema';
@@ -5,11 +6,14 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs'
 import { InjectModel } from '@nestjs/mongoose';
 import { Request, Response } from 'express';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
+import multer from 'multer';
 
 @Injectable()
 export class FileService {
   constructor(
     @InjectModel(File.name) private fileModel: Model<FileDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @Inject(ConfigService) private readonly configService: ConfigService,
   ) {}
 
@@ -17,7 +21,6 @@ export class FileService {
     const filePath = `${this.configService.get('filePath')}/${file.user}/${file.path}`
     return new Promise((res, rej) => {
       try {
-        console.log('filePath', filePath)
         if(!fs.existsSync(filePath)) {
           fs.mkdirSync(filePath)
           return res({message:'file was created'})
@@ -30,15 +33,56 @@ export class FileService {
     }) 
   }
 
-  async getFiles(@Req() req: Request, @Res() res: Response) {
+  async getFiles(req: Request, res: Response) {
     try {
-      console.log('user', req.user)
-      console.log('parent', req.query.parent || req.user)
       const files = await this.fileModel.find({user: req.user, parent: req.query.parent || req.user}).exec()
-      console.log('files', files)
       return res.status(200).json({message:'ok', data: files})
     } catch (err) {
       return res.status(500).json({message:'files db error'})
+    }
+  }
+
+  async uploadFile(req: Request, res: Response, file: Express.Multer.File): Promise<any> {
+    try {
+      const {parent} = req.body
+      const [user] = await this.userModel.find({_id: req.user}).exec();
+      const [parentFolder] = await this.fileModel.find({user: user._id, _id: parent})
+      if (user.usedSpace + file.size > user.diskSpace) {
+        res.status(400).json({message: 'There no space on the disk'})
+      }
+      let path=''
+      file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf-8');
+      if(parent) {
+        path = `${this.configService.get('filePath')}/${user._id}/${parentFolder.path}/${file.originalname}`
+      } else {
+        path = `${this.configService.get('filePath')}/${user._id}/${file.originalname}`
+      }
+      
+      if (fs.existsSync(path)) {
+        res.status(400).json({message: 'File already exist'})
+      }
+      fs.writeFileSync(path, file.buffer, 'utf8')
+
+      const fileType = file.originalname.split('.').pop()
+      const dbFile = new this.fileModel({
+        name: file.originalname,
+        type: fileType,
+        size: file.size,
+        path: parentFolder?.path,
+        parent: parentFolder?._id,
+        user: user._id
+      })
+      const savedfile = await dbFile.save()
+      user.usedSpace = user.usedSpace + file.size
+      parentFolder.size = parentFolder.size + file.size
+      const savedParentFolder = await parentFolder.save()
+      const savedUser = await user.save()
+      await Promise.all([savedfile,savedParentFolder,savedUser]).catch((err) => {
+        res.status(400).json({message: 'ok', data: err})
+      })
+      res.status(201).json(savedfile)
+    } catch(err) {
+      res.json({message: 'ok', data: err})
     }
   }
 

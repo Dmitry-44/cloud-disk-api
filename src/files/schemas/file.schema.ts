@@ -17,7 +17,7 @@ export class File {
 	accsessLink: string
 
 	@Prop({default: 0})
-	size: Number
+	size: number
 
 	@Prop({default: ''})
 	path: string

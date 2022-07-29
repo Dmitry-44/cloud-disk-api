@@ -80,7 +80,7 @@ export class UserService {
 	async auth(req: Request, res: Response, Authorization: string): Promise<any> {
 
         try {
-            const token = Authorization
+            const token = Authorization.split(' ')[1]
             if(!token) {
 				res.status(401).json({message:'ok', data: 'Auth error'})
             }
