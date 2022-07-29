@@ -14,10 +14,10 @@ export class User {
   password: string;
 
   @Prop({default: 1024**3*10})
-  diskSpace: Number;
+  diskSpace: number;
 
   @Prop({default: 0})
-  usedSpace: Number;
+  usedSpace: number;
 
   @Prop()
   avatar: string

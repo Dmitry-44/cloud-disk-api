@@ -7,12 +7,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { NextFunction, Request, Response } from 'express';
+import { File, FileDocument } from 'src/files/schemas/file.schema';
+import { FileService } from 'src/files/file.service';
 
 @Injectable()
 export class UserService {
 	constructor(
 		@InjectModel(User.name) private userModel: Model<UserDocument>,
+		@InjectModel(File.name) private fileModel: Model<FileDocument>,
 		@Inject(ConfigService) private readonly configService: ConfigService,
+		@Inject(FileService) private readonly fileService: FileService,
 		private jwtService: JwtService
 		) {}
 
@@ -28,6 +32,11 @@ export class UserService {
 				const saltOrRounds = 8;
 				const hashPassword = await bcrypt.hash(dto.password, saltOrRounds);
 				const createdUser = new this.userModel({email: dto.email, password: hashPassword});
+				console.log('createdUser', createdUser._id)
+				const file = await this.fileModel.create({user:createdUser._id, name:createdUser._id, type: 'dir', path: ''})
+				console.log('file', file)
+				await this.fileService.createDir(file)
+				console.log('zdes')
 				return createdUser.save();
 			}
 		} catch(err) {
@@ -71,7 +80,7 @@ export class UserService {
 	async auth(req: Request, res: Response, Authorization: string): Promise<any> {
 
         try {
-            const token = Authorization
+            const token = Authorization.split(' ')[1]
             if(!token) {
 				res.status(401).json({message:'ok', data: 'Auth error'})
             }
