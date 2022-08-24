@@ -48,32 +48,19 @@ export class FileController {
     }
 
     @Post('/upload')
-    @UseInterceptors(
-        FileInterceptor('file', 
-        // {
-        //   storage: diskStorage({
-        //     destination: (req: Request, file, cb) => {
-        //         let parent = req.body.parent
-        //         console.log('req.parent', req)
-        //         let path=''
-        //         if(parent) {
-        //             path = `/Users/designer02/projects/cloud-disk-api/files/${req.user}/${parent.path}/${file.originalname}`
-        //         } else {
-        //             path = `/Users/designer02/projects/cloud-disk-api/files/${req.user}/${file.originalname}`
-        //         }
-        //         cb(null, path)
-        //     },
-        //     filename: (req: Request, file, cb) => {
-        //         cb(null, file.filename)
-        //     }
-        //   }
-        //   ),
-        // }
-        ),
-      )
+    @UseInterceptors(FileInterceptor('file'))
     async uploadFile(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File) {
-        console.log('file', file)
         return this.fileService.uploadFile(req,res,file)
+    }
+
+    @Get('/download')
+    async download(@Req() req: Request, @Res() res: Response) {
+        return this.fileService.download(req,res)
+    }
+
+    @Post('/delete')
+    async delete(@Req() req: Request, @Res() res: Response, @Body() id: number) {
+        return this.fileService.delete(req,res,id)
     }
 
 }

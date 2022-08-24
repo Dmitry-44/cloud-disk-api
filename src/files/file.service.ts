@@ -86,4 +86,41 @@ export class FileService {
     }
   }
 
+  async download(req: Request, res: Response) {
+    try {
+      const [file] = await this.fileModel.find({_id: req.query.id}).exec();
+      if(!file){
+        res.status(404).json({message: 'error', data:{message:'file not found'}})
+      }
+      const filePath = `${this.configService.get('filePath')}/${req.user}/${file.path}/${file.name}`
+      console.log('filePath', filePath)
+      if(fs.existsSync(filePath)) {
+        return res.download(filePath, file.name)
+      }
+      res.status(400).json({message: 'error', data:{message:'download error'}})
+    } catch (err) {
+      res.json({message: 'error', data: err})
+    }
+  }
+
+  async delete(req: Request, res: Response, id: number) {
+    try {
+      const [file] = await this.fileModel.find({_id:id, user: req.user}).exec()
+      if(!file){
+        res.status(404).json({message:'error', data:{message:'file not found'}})
+      }
+      const path = `${this.configService.get('filePath')}/${req.user}/${file.path}`
+      if (file.type === 'dir') {
+        fs.rmdirSync(path)
+      } else {
+          fs.unlinkSync(path)
+      }
+      const deletedFileId = await this.fileModel.deleteOne({_id: file._id})
+      console.log('deletedFileId', deletedFileId)
+      res.status(200).json({message: 'ok', data: {id:file._id}})
+    } catch (err) {
+
+    }
+  }
+
 }
